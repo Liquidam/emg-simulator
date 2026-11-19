@@ -1,0 +1,30 @@
+1. Amplitude grows with effort, compressing near the top (sEMG-force relation)
+     effort 0.1   RMS 0.086 mV   active units  55   mean rate 10.3 Hz
+     effort 0.3   RMS 0.230 mV   active units  93   mean rate 17.3 Hz
+     effort 0.5   RMS 0.339 mV   active units 112   mean rate 24.6 Hz
+     effort 0.7   RMS 0.465 mV   active units 120   mean rate 30.4 Hz
+     effort 0.9   RMS 0.516 mV   active units 120   mean rate 32.0 Hz
+  monotonic rise (min step, mV)                  0.051   expected 0.0..10.0   PASS
+  slope top / slope bottom                       0.36   expected 0.05..1.0   PASS
+2. Frequency content at 50 % effort (surface EMG: median 50-150 Hz)
+  mean frequency MNF (Hz)                        104.8   expected 60..160   PASS
+  median frequency MDF (Hz)                      96.3   expected 50..150   PASS
+3. Recruitment order (Henneman): units at 10 % / 50 % / 90 % effort
+     active units: [56, 113, 120] of 120
+  all units recruited by 90 % (count)            120   expected 110..120   PASS
+  fraction recruited at 10 %                     0.47   expected 0.2..0.6   PASS
+4. Fatigue: 60 s hold at 60 % (MDF falls, RMS rises; Merletti, Lowery 2000)
+     start: MDF 98.8 Hz RMS 0.418 mV   end: MDF 87.4 Hz RMS 0.545 mV   fatigue 0.41
+  MDF change over 60 s (%)                       -11.5   expected -40..-8   PASS
+  RMS change over 60 s (%)                       30.3   expected 2..80   PASS
+5. Rest: noise floor with good contact (filtered, uV RMS)
+  rest RMS (uV)                                  2.7   expected 1..15   PASS
+6. Loose electrode: the 50 Hz line dominates the rest spectrum
+  share of power at 45-55 Hz                     0.93   expected 0.5..1.0   PASS
+7. Crosstalk: a relaxed neighbour picks up part of an active muscle
+  neighbour / active RMS ratio                   0.11   expected 0.05..0.35   PASS
+8. Blocks do not change the result (same seed, 7- and 40-sample steps)
+     note: spike times depend on the block grid (random draws), statistics must match
+  RMS ratio between block sizes                  0.93   expected 0.85..1.15   PASS
+
+RESULT: 12 / 12 checks in range

@@ -1,0 +1,5 @@
+{"_about": "Everything for Max/MSP on port 7400: raw (mV, 1000 Hz), envelope, features, ground truth.",
+ "channels": 4,
+ "osc": {"port": 7400, "streams": {"raw": {"on": true, "rate": 1000, "units": "mV"},
+         "env": {"on": true}, "features": {"on": true}, "truth": {"on": true}}},
+ "scenario": [{"mode": "improv", "level": 0.8, "speed": 0.5}]}

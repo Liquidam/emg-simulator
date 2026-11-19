@@ -1,0 +1,6 @@
+{"_about": "Federico Visi's WearPi: /adc with 4 envelopes 0..1 to SuperCollider/Pd default port 57120.",
+ "channels": 4,
+ "link_channels": true,
+ "osc": {"port": 57120, "streams": {"raw": {"on": false}, "env": {"on": false},
+         "adc": {"on": true, "rate": 100, "smooth": 8}}},
+ "scenario": [{"mode": "improv", "level": 0.8, "speed": 0.5}]}

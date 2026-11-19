@@ -1,0 +1,6 @@
+{"_about": "Our own sensor, exactly: ESP32 /bio at 200 Hz to EMG6 (port 9100). EMG in ADC counts around 2160, plus IMU.",
+ "channels": 1,
+ "device": {"adc_bits": 12, "adc_offset": 2160, "adc_counts_per_mV": 1400.0, "adc_noise_lsb": 3.0},
+ "osc": {"port": 9100, "streams": {"raw": {"on": false}, "env": {"on": false},
+         "bio": {"on": true, "channel": 1, "rate": 200, "imu": true}}},
+ "scenario": [{"mode": "pulses", "level": 0.7, "period": 3.0, "duty": 0.5}]}

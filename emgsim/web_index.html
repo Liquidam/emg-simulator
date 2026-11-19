@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>EMG Simulator</title>
+<style>
+  :root {
+    --bg: #121418; --panel: #1b1e24; --panel2: #23272f; --line: #2c313a;
+    --fg: #e6e8eb; --dim: #8a9099; --acc: #73c7f2; --gold: #ffd673; --pink: #ff6fa8;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg);
+    font: 13px/1.35 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  body { display: flex; flex-direction: column; }
+  header { display: flex; align-items: center; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  header h1 { font-size: 17px; margin: 0 10px 0 0; letter-spacing: .04em; }
+  header .sub { color: var(--dim); margin-right: auto; }
+  button, select, input[type=text], input[type=number] {
+    background: var(--panel2); color: var(--fg); border: 1px solid var(--line); border-radius: 5px;
+    padding: 6px 10px; font: inherit; }
+  button { cursor: pointer; }
+  button:hover { background: #2e333d; }
+  button.on { background: #7a2b3c; border-color: #a33a52; }
+  main { flex: 1; display: flex; min-height: 0; }
+  #left { flex: 1; display: flex; flex-direction: column; min-width: 0; padding: 12px 6px 12px 16px; }
+  #scopewrap { flex: 1; position: relative; background: #0e1013; border-radius: 6px; overflow: hidden; min-height: 200px; }
+  #scope { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #meters { display: flex; gap: 10px; margin-top: 10px; }
+  .meter { flex: 1; background: var(--panel); border-radius: 6px; padding: 8px 10px; }
+  .meter .bar { height: 8px; background: var(--panel2); border-radius: 4px; margin-top: 6px; overflow: hidden; }
+  .meter .bar i { display: block; height: 100%; width: 0; }
+  .meter .num { color: var(--dim); font: 11px/1.3 Menlo, Consolas, monospace; margin-top: 6px; white-space: nowrap; }
+  #right { width: 430px; display: flex; flex-direction: column; padding: 12px 16px 12px 6px; min-height: 0; }
+  #tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  #tabs button { border-radius: 5px 5px 0 0; border-bottom: none; color: var(--dim); padding: 7px 11px; }
+  #tabs button.sel { color: var(--fg); background: var(--panel); }
+  #pane { flex: 1; overflow-y: auto; background: var(--panel); border-radius: 0 6px 6px 6px; padding: 6px 14px 14px; }
+  h3 { color: var(--acc); font-size: 12px; letter-spacing: .06em; margin: 16px 0 4px; }
+  .hint { color: var(--dim); font-size: 12px; margin: 0 0 6px; }
+  .row { display: grid; grid-template-columns: 150px 1fr 56px; align-items: center; gap: 8px; margin: 5px 0; }
+  .row label { color: #c9cdd3; }
+  .row .val { color: var(--dim); font: 11px Menlo, Consolas, monospace; text-align: right; }
+  .row.wide { grid-template-columns: 150px 1fr; }
+  input[type=range] { width: 100%; accent-color: var(--acc); }
+  .chk { display: flex; align-items: center; gap: 8px; margin: 6px 0; color: #c9cdd3; }
+  #effortbox { display: flex; gap: 16px; align-items: stretch; margin: 10px 0 4px; }
+  #effort { writing-mode: vertical-lr; direction: rtl; width: 46px; height: 190px; accent-color: var(--pink); }
+  #space { flex: 1; display: flex; align-items: center; justify-content: center; text-align: center;
+    border: 2px dashed var(--line); border-radius: 8px; color: var(--dim); font-size: 15px; user-select: none; cursor: pointer; }
+  #space.down { border-color: var(--pink); color: var(--fg); background: #2a1a22; }
+  footer { padding: 8px 16px; color: var(--dim); border-top: 1px solid var(--line); font: 12px Menlo, Consolas, monospace;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  code { color: var(--gold); }
+  .chanrow { display: grid; grid-template-columns: 50px 1fr; gap: 8px; align-items: center; margin: 4px 0; }
+  #help { position: fixed; inset: 0; background: rgba(8,9,11,0.78); display: none; align-items: center; justify-content: center; z-index: 10; }
+  #help.show { display: flex; }
+  #help .card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; max-width: 720px; width: calc(100% - 40px);
+    max-height: calc(100% - 40px); overflow-y: auto; padding: 22px 28px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }
+  #help h2 { margin: 0 0 4px; font-size: 19px; }
+  #help ol { padding-left: 20px; margin: 10px 0; }
+  #help li { margin: 10px 0; color: #c9cdd3; }
+  #help li b { color: var(--fg); }
+  #help .k { display: inline-block; border: 1px solid #555b66; border-bottom-width: 2px; border-radius: 4px; padding: 0 6px; font: 12px Menlo, Consolas, monospace; color: var(--fg); }
+  #help table { border-collapse: collapse; margin: 6px 0 0; font-size: 12px; }
+  #help td { padding: 3px 10px 3px 0; vertical-align: top; color: #c9cdd3; }
+  #help .close { float: right; }
+</style>
+</head>
+<body>
+<header>
+  <h1>EMG SIMULATOR</h1><span class="sub">biophysical surface EMG &rarr; OSC</span>
+  <label class="hint" style="margin:0">Preset</label>
+  <select id="preset"><option value="">choose&hellip;</option></select>
+  <button id="pause">Pause</button>
+  <button id="rec">Record</button>
+  <a href="/settings.json"><button>Save settings</button></a>
+  <button id="loadbtn">Load settings</button><input type="file" id="loadfile" accept=".json" hidden>
+  <button id="helpbtn" title="How to use">?  Help</button>
+  <button id="quit">Quit</button>
+</header>
+<div id="help"><div class="card">
+  <button class="close" id="helpclose">Got it</button>
+  <h2>EMG Simulator &mdash; how to use</h2>
+  <p class="hint">A simulated surface EMG sensor. Everything you see is computed live from a model of the body and sent out over OSC.</p>
+  <ol>
+    <li><b>Watch.</b> A simulated player contracts at random, like a real person (scenario <code>performer</code>):
+      rests, normal squeezes, accents, strong bursts, long holds, ramps, flurries. Each coloured lane is one muscle;
+      gold = envelope, dashed = effort.</li>
+    <li><b>Play it yourself.</b> Hold <span class="k">SPACE</span> anywhere on this page (or press the box in PERFORM) to contract.
+      The big slider works too. Both add on top of the scenario.</li>
+    <li><b>Shape it.</b> PERFORM: <i>activity</i> (how often), <i>intensity</i> (how hard), scenario.
+      MUSCLE: channels, motor units, fatigue. NOISE: electrode contact, hum, movement artifacts.
+      Or try a <b>Preset</b> at the top (e.g. <i>classroom_noisy</i>, <i>loose_electrode</i>, <i>fatigue_demo</i>).</li>
+    <li><b>Receive it</b> (OSC OUT tab sets host, port and streams). Default: <code>127.0.0.1:9100</code>
+      <table>
+        <tr><td><code>/emgsim/raw ch1 ch2 &hellip;</code></td><td>raw EMG in mV, 1000 messages/s</td></tr>
+        <tr><td><code>/emgsim/env e1 e2 &hellip;</code></td><td>envelope 0..1 (1 = maximal effort), 100/s</td></tr>
+        <tr><td><code>/emgsim/features/N</code></td><td>rms mav wl zcr tkeo mnf mdf (switch on in OSC OUT)</td></tr>
+        <tr><td><code>/bio</code>, <code>/adc</code></td><td>drop-in formats of the EMG6 ESP32 sensor and the WearPi</td></tr>
+      </table>
+      In Max: <code>[udpreceive 9100]</code> &rarr; <code>[route /emgsim/env]</code> &rarr; <code>[unpack f f f f]</code>.</li>
+    <li><b>Control it from Max/Pd</b>: send to port 9201, e.g. <code>/emgsim/drive 0.7</code>, <code>/emgsim/mode pulses</code>,
+      <code>/emgsim/set noise.contact 0.3</code>.</li>
+    <li><b>Record</b> saves a .csv into the <code>recordings</code> folder. <b>Quit</b> stops the simulator.</li>
+  </ol>
+  <p class="hint">Open this again with the <b>? Help</b> button. Full documentation: README.md.</p>
+</div></div>
+<main>
+  <section id="left">
+    <div id="scopewrap"><canvas id="scope"></canvas></div>
+    <div id="meters"></div>
+  </section>
+  <section id="right">
+    <div id="tabs"></div>
+    <div id="pane"></div>
+  </section>
+</main>
+<footer id="status">connecting&hellip;</footer>
+
+<script>
+const LANE = ['#ff6fa8', '#73c7f2', '#9be37a', '#ffd673', '#c49bff', '#ff9a5c', '#5ce0d0', '#e0e0e0'];
+let CFG = null, MODES = [], VERSION = -1, SEC = 6, RATE = 500, CH = 0, N = -1;
+let SIG = [], DRV = [], INFO = [], FEATS = [], ENV = [];
+
+// ---------------------------------------------------------------- controls schema
+// [type, path, label, min, max, step] ; type: r = range, s = select, c = checkbox, t = text, h = heading, p = hint
+const TABS = {
+  PERFORM: [
+    ['h', 'EFFORT'], ['p', 'Hold SPACE (anywhere on this page) or press the box below to contract. ' +
+      'The slider adds on top of any scenario.'],
+    ['effort'],
+    ['h', 'SCENARIO'],
+    ['s', 'scenario.0.mode', 'mode', 'MODES'],
+    ['p', '<b>performer</b> = a simulated player: rests, normal squeezes, accents, strong bursts, holds, ramps, flurries.'],
+    ['r', 'scenario.0.activity', 'activity (performer)', 0, 1, 0.01],
+    ['r', 'scenario.0.intensity', 'intensity (performer)', 0, 1, 0.01],
+    ['r', 'scenario.0.level', 'level / ceiling', 0, 1, 0.01],
+    ['r', 'scenario.0.period', 'period (s)', 0.2, 10, 0.1],
+    ['r', 'scenario.0.duty', 'duty (pulses)', 0.05, 0.95, 0.01],
+    ['r', 'scenario.0.tremor_hz', 'tremor (Hz)', 2, 14, 0.1],
+    ['r', 'scenario.0.tremor_depth', 'tremor depth', 0, 0.6, 0.01],
+    ['r', 'scenario.0.speed', 'improv speed', 0.05, 2, 0.01],
+    ['r', 'scenario.0.rate', 'staccato per s', 0.1, 6, 0.1],
+    ['h', 'CHANNELS'],
+    ['p', 'Linked: one player, neighbouring muscles co-contract. Unlinked: each channel has its own slider.'],
+    ['c', 'link_channels', 'link all channels'],
+    ['chans'],
+    ['button', 'Reset fatigue', 'fatigue'],
+  ],
+  MUSCLE: [
+    ['h', 'MUSCLES'], ['p', 'One muscle under each electrode. Motor-unit pool after Fuglevand et al. 1993.'],
+    ['r', 'channels', 'channels', 1, 8, 1],
+    ['r', 'physiology.n_mu', 'motor units', 20, 300, 1],
+    ['r', 'physiology.mvc_rms_mV', 'max amplitude (mV RMS)', 0.05, 3, 0.01],
+    ['r', 'physiology.muap_width_ms', 'MUAP width (ms)', 0.8, 4, 0.05],
+    ['r', 'physiology.depth_max', 'deepest unit (mm)', 4, 30, 1],
+    ['h', 'FIRING'],
+    ['r', 'physiology.rr', 'recruitment range', 5, 100, 1],
+    ['r', 'physiology.mfr', 'min rate (Hz)', 4, 15, 0.5],
+    ['r', 'physiology.pfr_first', 'peak rate first (Hz)', 15, 60, 1],
+    ['r', 'physiology.pfr_last', 'peak rate last (Hz)', 10, 50, 1],
+    ['r', 'physiology.isi_cv', 'irregularity (CV)', 0, 0.4, 0.01],
+    ['r', 'physiology.common_drive', 'common drive', 0, 0.2, 0.005],
+    ['h', 'FATIGUE'], ['p', 'Sustained effort slows conduction: the spectrum moves down, amplitude rises. Rest recovers.'],
+    ['c', 'physiology.fatigue_on', 'fatigue on'],
+    ['r', 'physiology.fatigue_rate', 'fatigue rate', 0, 0.2, 0.005],
+    ['r', 'physiology.recovery_rate', 'recovery rate', 0, 0.1, 0.005],
+    ['h', 'CROSSTALK'],
+    ['r', 'physiology.crosstalk', 'leak to neighbours', 0, 0.5, 0.01],
+  ],
+  NOISE: [
+    ['h', 'ELECTRODE CONTACT'], ['p', '1 = perfect (gel, clean skin). Lower = more hum, more artifacts, electrode pops.'],
+    ['r', 'noise.contact', 'contact quality', 0, 1, 0.01],
+    ['h', 'NOISE'],
+    ['r', 'noise.baseline_uV', 'baseline (uV RMS)', 0, 30, 0.5],
+    ['r', 'noise.wander_uV', 'baseline wander (uV)', 0, 300, 1],
+    ['h', 'POWER LINE'],
+    ['c', 'noise.hum_on', 'hum on'],
+    ['s', 'noise.mains_hz', 'mains (Hz)', [50, 60]],
+    ['r', 'noise.hum_uV', 'hum level (uV)', 0, 100, 1],
+    ['h', 'MOVEMENT'],
+    ['r', 'noise.artifact_mV', 'artifact size (mV)', 0, 3, 0.01],
+    ['r', 'noise.artifacts_per_min', 'random per min', 0, 30, 0.5],
+    ['r', 'noise.onset_artifact_prob', 'at movement start', 0, 1, 0.01],
+    ['r', 'noise.pop_mV', 'electrode pop (mV)', 0, 5, 0.1],
+    ['r', 'noise.pops_per_min', 'pops per min', 0, 5, 0.1],
+    ['h', 'HEART'], ['p', 'ECG crosstalk, for electrodes near the chest or shoulder.'],
+    ['r', 'noise.ecg_uV', 'ECG level (uV)', 0, 500, 5],
+    ['r', 'noise.heart_bpm', 'heart rate (bpm)', 40, 160, 1],
+  ],
+  DEVICE: [
+    ['h', 'SAMPLING'],
+    ['s', 'fs', 'sample rate (Hz)', [1000, 2000, 4000]],
+    ['r', 'block_ms', 'engine block (ms)', 5, 40, 1],
+    ['h', 'RANDOMNESS'], ['p', '0 = a new random run every start. Any other number replays exactly the same run (for experiments).'],
+    ['t', 'seed', 'seed'],
+    ['h', 'AMPLIFIER FILTERS'], ['p', 'Standard surface EMG band 20-450 Hz (SENIAM, De Luca 2010).'],
+    ['c', 'device.hp_on', 'high-pass on (4th order)'],
+    ['r', 'device.hp_hz', 'high-pass (Hz)', 1, 60, 1],
+    ['c', 'device.lp_on', 'low-pass on'],
+    ['r', 'device.lp_hz', 'low-pass (Hz)', 100, 900, 10],
+    ['c', 'device.notch_on', 'notch at mains'],
+    ['h', 'ADC'], ['p', 'For "counts" units and the /bio stream. Preset emg6_esp32 = our ESP32 sensor.'],
+    ['r', 'device.adc_bits', 'bits', 8, 24, 1],
+    ['r', 'device.adc_offset', 'offset (counts)', 0, 65535, 1],
+    ['r', 'device.adc_counts_per_mV', 'counts per mV', 10, 4000, 10],
+    ['r', 'device.adc_noise_lsb', 'converter noise (LSB)', 0, 20, 0.5],
+  ],
+  'OSC OUT': [
+    ['h', 'DESTINATION'],
+    ['t', 'osc.host', 'host'], ['t', 'osc.port', 'port'], ['t', 'osc.in_port', 'control input port'],
+    ['c', 'osc.use_bundles', 'send OSC bundles'],
+    ['r', 'osc.packet_loss', 'simulate packet loss', 0, 0.5, 0.01],
+    ['h', 'raw  -  one message per sample'], ['p', '<code>/emgsim/raw ch1 ch2 ...</code>  units mV, uV, counts or norm'],
+    ['c', 'osc.streams.raw.on', 'on'], ['t', 'osc.streams.raw.address', 'address'], ['t', 'osc.streams.raw.rate', 'rate (Hz)'],
+    ['s', 'osc.streams.raw.units', 'units', ['mV', 'uV', 'counts', 'norm']],
+    ['s', 'osc.streams.raw.decimate', 'decimate', ['average', 'point']],
+    ['t', 'osc.streams.raw.port', 'port (empty = default)'],
+    ['h', 'rawblock  -  full rate, one message per channel per block'], ['p', '<code>/emgsim/rawblock/N s1 s2 ...</code>'],
+    ['c', 'osc.streams.rawblock.on', 'on'], ['s', 'osc.streams.rawblock.units', 'units', ['mV', 'uV', 'counts', 'norm']],
+    ['h', 'env  -  RMS envelope'], ['p', '<code>/emgsim/env e1 e2 ...</code>  1 = maximal effort'],
+    ['c', 'osc.streams.env.on', 'on'], ['t', 'osc.streams.env.rate', 'rate (Hz)'], ['t', 'osc.streams.env.window_ms', 'window (ms)'],
+    ['h', 'features'], ['p', '<code>/emgsim/features/N rms mav wl zcr tkeo mnf mdf</code>'],
+    ['c', 'osc.streams.features.on', 'on'], ['t', 'osc.streams.features.rate', 'rate (Hz)'],
+    ['h', 'truth  -  what the body really did'], ['p', '<code>/emgsim/truth/drive /force /fatigue /active /rate</code>'],
+    ['c', 'osc.streams.truth.on', 'on'], ['t', 'osc.streams.truth.rate', 'rate (Hz)'],
+    ['h', 'bio  -  EMG6 / ESP32 format'], ['p', '<code>/bio seq t_us emg_raw ax ay az gx gy gz</code> 200 Hz. Send to EMG6 port 9100.'],
+    ['c', 'osc.streams.bio.on', 'on'], ['t', 'osc.streams.bio.channel', 'channel'], ['t', 'osc.streams.bio.port', 'port (empty = default)'],
+    ['c', 'osc.streams.bio.imu', 'simulate IMU'],
+    ['h', 'adc  -  WearPi format'], ['p', '<code>/adc a1 a2 a3 a4</code> envelopes 0..1 (wearpi-py)'],
+    ['c', 'osc.streams.adc.on', 'on'], ['t', 'osc.streams.adc.rate', 'rate (Hz)'], ['t', 'osc.streams.adc.port', 'port (empty = default)'],
+    ['h', 'CONTROL INPUT'], ['p', 'Send to the control port: <code>/emgsim/drive f</code>, <code>/emgsim/drive ch f</code>, ' +
+      '<code>/emgsim/mode name</code>, <code>/emgsim/set path value</code>, <code>/emgsim/preset name</code>, ' +
+      '<code>/emgsim/fatigue/reset</code>, <code>/emgsim/pause 0|1</code>'],
+  ],
+};
+
+// ---------------------------------------------------------------- server
+async function api(msg) {
+  const r = await fetch('/api', {method: 'POST', body: JSON.stringify(msg)});
+  return r.json();
+}
+function get(path) {
+  let d = CFG;
+  for (const k of path.split('.')) { if (d == null) return undefined; d = d[k]; }
+  return d;
+}
+function setLocal(path, v) {
+  const ks = path.split('.'); let d = CFG;
+  for (const k of ks.slice(0, -1)) d = d[k];
+  d[ks[ks.length - 1]] = v;
+}
+const timers = {};
+function send(path, v, now) {
+  setLocal(path, v);
+  clearTimeout(timers[path]);
+  timers[path] = setTimeout(() => api({op: 'set', path, value: v}), now ? 0 : 60);
+}
+
+// ---------------------------------------------------------------- build the controls
+let TAB = 'PERFORM';
+function buildTabs() {
+  const t = document.getElementById('tabs'); t.innerHTML = '';
+  for (const name of Object.keys(TABS)) {
+    const b = document.createElement('button'); b.textContent = name;
+    if (name === TAB) b.className = 'sel';
+    b.onclick = () => { TAB = name; buildTabs(); buildPane(); };
+    t.appendChild(b);
+  }
+}
+function fmt(v, step) {
+  if (step >= 1) return String(Math.round(v));
+  const d = step >= 0.1 ? 1 : step >= 0.01 ? 2 : 3;
+  return Number(v).toFixed(d);
+}
+function buildPane() {
+  const pane = document.getElementById('pane'); pane.innerHTML = '';
+  for (const it of TABS[TAB]) {
+    const [type] = it;
+    if (type === 'h') { const h = document.createElement('h3'); h.textContent = it[1]; pane.appendChild(h); }
+    else if (type === 'p') { const p = document.createElement('p'); p.className = 'hint'; p.innerHTML = it[1]; pane.appendChild(p); }
+    else if (type === 'effort') pane.appendChild(effortBox());
+    else if (type === 'chans') pane.appendChild(chanSliders());
+    else if (type === 'button') {
+      const b = document.createElement('button'); b.textContent = it[1]; b.style.marginTop = '12px';
+      b.onclick = () => api({op: it[2]}); pane.appendChild(b);
+    }
+    else if (type === 'r') {
+      const [, path, label, lo, hi, step] = it;
+      const row = document.createElement('div'); row.className = 'row';
+      const l = document.createElement('label'); l.textContent = label;
+      const inp = document.createElement('input'); inp.type = 'range'; inp.min = lo; inp.max = hi; inp.step = step;
+      inp.value = get(path);
+      const val = document.createElement('span'); val.className = 'val'; val.textContent = fmt(inp.value, step);
+      const live = /^(physiology\.(n_mu|rr|mfr|pfr_first|pfr_last|isi_cv|muap_width_ms|depth_max|mvc_rms_mV)|channels|fs)$/.test(path) === false;
+      inp.oninput = () => { val.textContent = fmt(inp.value, step); if (live) send(path, Number(inp.value)); };
+      inp.onchange = () => send(path, Number(inp.value), true);
+      row.append(l, inp, val); pane.appendChild(row);
+    }
+    else if (type === 's') {
+      const [, path, label, opts] = it;
+      const row = document.createElement('div'); row.className = 'row wide';
+      const l = document.createElement('label'); l.textContent = label;
+      const s = document.createElement('select');
+      for (const o of (opts === 'MODES' ? MODES : opts)) { const e = document.createElement('option'); e.value = o; e.textContent = o; s.appendChild(e); }
+      s.value = String(get(path));
+      s.onchange = () => { const v = typeof get(path) === 'number' ? Number(s.value) : s.value; send(path, v, true); };
+      row.append(l, s); pane.appendChild(row);
+    }
+    else if (type === 'c') {
+      const [, path, label] = it;
+      const l = document.createElement('label'); l.className = 'chk';
+      const c = document.createElement('input'); c.type = 'checkbox'; c.checked = !!get(path);
+      c.onchange = () => { send(path, c.checked, true); if (path === 'link_channels') setTimeout(buildPane, 50); };
+      l.append(c, document.createTextNode(label)); pane.appendChild(l);
+    }
+    else if (type === 't') {
+      const [, path, label] = it;
+      const row = document.createElement('div'); row.className = 'row wide';
+      const l = document.createElement('label'); l.textContent = label;
+      const inp = document.createElement('input'); inp.type = 'text'; inp.value = get(path) == null ? '' : get(path);
+      inp.onchange = () => {
+        const old = get(path); let v = inp.value.trim();
+        if (typeof old === 'number' || (old == null && v !== '')) { v = Number(v); if (isNaN(v)) return; }
+        if (old == null && inp.value.trim() === '') v = null;
+        send(path, v, true);
+      };
+      row.append(l, inp); pane.appendChild(row);
+    }
+  }
+}
+function effortBox() {
+  const box = document.createElement('div'); box.id = 'effortbox';
+  const r = document.createElement('input'); r.type = 'range'; r.id = 'effort'; r.min = 0; r.max = 1; r.step = 0.01; r.value = 0;
+  r.oninput = () => api({op: 'drive', value: Number(r.value)});
+  const sp = document.createElement('div'); sp.id = 'space'; sp.innerHTML = 'hold <b>SPACE</b><br>or press here<br>to contract';
+  sp.onpointerdown = () => contract(true); sp.onpointerup = sp.onpointerleave = () => contract(false);
+  box.append(r, sp); return box;
+}
+function chanSliders() {
+  const w = document.createElement('div');
+  if (CFG.link_channels) return w;
+  for (let c = 0; c < CH; c++) {
+    const row = document.createElement('div'); row.className = 'chanrow';
+    const l = document.createElement('span'); l.textContent = 'ch ' + (c + 1); l.style.color = LANE[c % 8];
+    const r = document.createElement('input'); r.type = 'range'; r.min = 0; r.max = 1; r.step = 0.01; r.value = 0;
+    r.oninput = () => api({op: 'drive', value: Number(r.value), channel: c});
+    row.append(l, r); w.appendChild(row);
+  }
+  return w;
+}
+let held = false;
+function contract(on) {
+  if (on === held) return; held = on;
+  const lv = on ? Number(get('scenario.0.level') || 0.8) : 0;
+  api({op: 'drive', value: lv});
+  const sp = document.getElementById('space'); if (sp) sp.classList.toggle('down', on);
+}
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !(e.target instanceof HTMLInputElement && e.target.type === 'text')) { e.preventDefault(); if (!e.repeat) contract(true); }
+});
+document.addEventListener('keyup', e => { if (e.code === 'Space') { e.preventDefault(); contract(false); } });
+
+// ---------------------------------------------------------------- header
+document.getElementById('preset').onchange = async e => { if (e.target.value) { await api({op: 'preset', name: e.target.value}); await loadConfig(); e.target.value = ''; } };
+document.getElementById('pause').onclick = () => api({op: 'pause'});
+const helpBox = document.getElementById('help');
+document.getElementById('helpbtn').onclick = () => helpBox.classList.add('show');
+document.getElementById('helpclose').onclick = () => { helpBox.classList.remove('show'); try { localStorage.setItem('emgsim_help_seen', '1'); } catch (e) {} };
+helpBox.onclick = e => { if (e.target === helpBox) document.getElementById('helpclose').click(); };
+try { if (!localStorage.getItem('emgsim_help_seen')) helpBox.classList.add('show'); } catch (e) { helpBox.classList.add('show'); }
+document.getElementById('rec').onclick = () => api({op: 'record'});
+document.getElementById('quit').onclick = () => { api({op: 'quit'}); document.body.innerHTML = '<p style="padding:40px">Simulator stopped. You can close this tab.</p>'; };
+document.getElementById('loadbtn').onclick = () => document.getElementById('loadfile').click();
+document.getElementById('loadfile').onchange = async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { await api({op: 'load', cfg: JSON.parse(await f.text())}); await loadConfig(); } catch (err) { alert('Could not load: ' + err); }
+};
+
+async function loadConfig() {
+  const r = await (await fetch('/config')).json();
+  CFG = r.cfg; MODES = r.modes; VERSION = r.version;
+  const sel = document.getElementById('preset');
+  if (sel.options.length <= 1) for (const p of r.presets) { const o = document.createElement('option'); o.value = p; o.textContent = p; sel.appendChild(o); }
+  buildTabs(); buildPane();
+}
+
+// ---------------------------------------------------------------- data + scope
+function resetBuffers(ch) {
+  CH = ch; SIG = []; DRV = [];
+  for (let c = 0; c < ch; c++) { SIG.push(new Float32Array(SEC * RATE)); DRV.push(new Float32Array(SEC * RATE)); }
+  buildMeters();
+}
+function push(buf, arr) {
+  const n = arr.length; if (!n) return;
+  if (n >= buf.length) { buf.set(arr.slice(n - buf.length)); return; }
+  buf.copyWithin(0, n); buf.set(arr, buf.length - n);
+}
+async function poll() {
+  try {
+    const s = await (await fetch('/state?since=' + N)).json();
+    if (s.ch !== CH) { resetBuffers(s.ch); }
+    for (let c = 0; c < s.ch; c++) { push(SIG[c], s.sig[c] || []); push(DRV[c], s.drive[c] || []); }
+    N = s.n; INFO = s.info; FEATS = s.feats; ENV = s.env;
+    if (s.version !== VERSION) await loadConfig();
+    status(s.status);
+  } catch (e) { document.getElementById('status').textContent = 'simulator not reachable - is it still running?'; }
+  setTimeout(poll, 50);
+}
+function status(st) {
+  document.getElementById('pause').textContent = st.paused ? 'Resume' : 'Pause';
+  const rec = document.getElementById('rec'); rec.textContent = st.recording ? 'Stop + save' : 'Record'; rec.classList.toggle('on', st.recording);
+  let t = `OSC -> ${st.host}:${st.port}   ${st.streams.join(', ') || 'no streams'}   ${st.msgs} msg/s   CPU ${st.cpu} ms/s   control in :${st.in_port}`;
+  if (st.rx_error) t += '   |   ' + st.rx_error;
+  if (st.last_rec) t += '   |   ' + st.last_rec;
+  document.getElementById('status').textContent = t;
+}
+function buildMeters() {
+  const m = document.getElementById('meters'); m.innerHTML = '';
+  for (let c = 0; c < CH; c++) {
+    const d = document.createElement('div'); d.className = 'meter';
+    d.innerHTML = `<div style="color:${LANE[c % 8]}">ch ${c + 1}</div><div class="bar"><i style="background:${LANE[c % 8]}"></i></div><div class="num"></div>`;
+    m.appendChild(d);
+  }
+}
+function updateMeters() {
+  const ms = document.querySelectorAll('.meter');
+  ms.forEach((d, c) => {
+    const e = ENV[c] != null ? ENV[c] : (FEATS[c] ? FEATS[c][0] / ((CFG && CFG.physiology.mvc_rms_mV) || 0.5) : 0);
+    d.querySelector('i').style.width = Math.min(100, e * 100) + '%';
+    const i = INFO[c] || {}, f = FEATS[c] || [0, 0, 0];
+    d.querySelector('.num').textContent = `units ${i.active ?? '-'}  ${i.rate ?? '-'} Hz  fatigue ${i.fatigue ?? '-'}  RMS ${f[0]} mV  MDF ${f[2]} Hz`;
+  });
+}
+const cv = document.getElementById('scope'), g = cv.getContext('2d');
+function draw() {
+  const dpr = window.devicePixelRatio || 1;
+  const W = cv.clientWidth, H = cv.clientHeight;
+  if (cv.width !== W * dpr || cv.height !== H * dpr) { cv.width = W * dpr; cv.height = H * dpr; }
+  g.setTransform(dpr, 0, 0, dpr, 0, 0);
+  g.fillStyle = '#0e1013'; g.fillRect(0, 0, W, H);
+  if (!CH || !CFG) { requestAnimationFrame(draw); return; }
+  const lane = H / CH, mvc = CFG.physiology.mvc_rms_mV || 0.5, full = 4 * mvc;
+  for (let c = 0; c < CH; c++) {
+    const y0 = lane * (c + 0.5), amp = lane * 0.42, s = SIG[c], d = DRV[c], n = s.length, per = n / W;
+    if (c > 0) { g.fillStyle = '#20242b'; g.fillRect(0, lane * c, W, 1); }
+    g.fillStyle = '#1b1f25'; g.fillRect(0, y0, W, 1);
+    // raw: min-max per pixel column
+    g.fillStyle = LANE[c % 8];
+    const envU = new Float32Array(W);
+    for (let x = 0; x < W; x++) {
+      const a = Math.floor(x * per), b = Math.max(a + 1, Math.floor((x + 1) * per));
+      let mn = 1e9, mx = -1e9, ss = 0;
+      for (let i = a; i < b; i++) { const v = s[i]; if (v < mn) mn = v; if (v > mx) mx = v; ss += v * v; }
+      envU[x] = Math.sqrt(ss / (b - a));
+      const top = y0 - Math.max(-1, Math.min(1, mx / full)) * amp, bot = y0 - Math.max(-1, Math.min(1, mn / full)) * amp;
+      g.fillRect(x, top, 1, Math.max(1, bot - top));
+    }
+    // envelope: smoothed RMS, gold contour
+    g.strokeStyle = 'rgba(255,224,140,0.85)'; g.lineWidth = 1.3;
+    for (const sign of [1, -1]) {
+      g.beginPath(); let acc = 0;
+      for (let x = 0; x < W; x++) {
+        acc = x === 0 ? envU[0] : acc + 0.12 * (envU[x] - acc);
+        const y = y0 - sign * Math.min(1, acc * 1.6 / full) * amp;
+        x === 0 ? g.moveTo(x, y) : g.lineTo(x, y);
+      }
+      g.stroke();
+    }
+    // effort (dashed)
+    g.strokeStyle = 'rgba(255,255,255,0.35)'; g.setLineDash([3, 4]); g.beginPath();
+    for (let x = 0; x < W; x += 2) {
+      const v = d[Math.min(n - 1, Math.floor(x * per))], y = y0 + amp - v * 2 * amp;
+      x === 0 ? g.moveTo(x, y) : g.lineTo(x, y);
+    }
+    g.stroke(); g.setLineDash([]);
+    g.fillStyle = '#8a9099'; g.font = '11px Menlo, Consolas, monospace';
+    g.fillText('ch ' + (c + 1), 8, lane * c + 15);
+  }
+  g.fillStyle = '#5d636c'; g.font = '11px -apple-system, Segoe UI, sans-serif';
+  g.fillText(`last ${SEC} s   +-${full.toFixed(1)} mV per lane   gold = envelope   dashed = effort`, W - 380, 16);
+  updateMeters();
+  requestAnimationFrame(draw);
+}
+loadConfig().then(() => { poll(); requestAnimationFrame(draw); });
+</script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+{"_about": "Good gel electrodes, clean skin, quiet room. The textbook signal.",
+ "noise": {"contact": 1.0, "baseline_uV": 1.5, "hum_uV": 3.0, "wander_uV": 5.0, "artifacts_per_min": 0.2,
+           "onset_artifact_prob": 0.05, "pops_per_min": 0.0},
+ "physiology": {"crosstalk": 0.08}}

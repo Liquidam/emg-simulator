@@ -1,0 +1,5 @@
+{"_about": "A long hold at 60 %: watch MDF fall and amplitude rise. Reset fatigue on the PERFORM tab.",
+ "physiology": {"fatigue_on": true, "fatigue_rate": 0.05, "recovery_rate": 0.01},
+ "channels": 1,
+ "scenario": [{"mode": "hold", "level": 0.6}],
+ "osc": {"streams": {"features": {"on": true}, "truth": {"on": true}}}}

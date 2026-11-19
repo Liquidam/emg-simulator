@@ -1,0 +1,4 @@
+{"_about": "Dry electrodes in a classroom: hum, movement, people moving around.",
+ "noise": {"contact": 0.55, "baseline_uV": 6.0, "hum_uV": 15.0, "wander_uV": 60.0, "artifact_mV": 0.6,
+           "artifacts_per_min": 8.0, "onset_artifact_prob": 0.7, "pops_per_min": 0.5},
+ "scenario": [{"mode": "improv", "level": 0.7, "speed": 0.6}]}

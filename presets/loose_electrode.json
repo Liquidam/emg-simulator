@@ -1,0 +1,3 @@
+{"_about": "One electrode losing contact: strong mains hum, pops and big artifacts.",
+ "noise": {"contact": 0.15, "hum_uV": 20.0, "artifact_mV": 1.2, "artifacts_per_min": 12.0, "pops_per_min": 1.0},
+ "scenario": [{"mode": "pulses", "level": 0.6, "period": 2.0, "duty": 0.5}]}
